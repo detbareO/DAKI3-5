@@ -2,15 +2,13 @@ from pathlib import Path
 from collections import Counter
 import statistics
 
-#Lavet af Claude Code
-
 root = Path(__file__).parent / "image"
 if not root.exists():
     raise SystemExit(f"Could not find {root}")
 
-counts = Counter()  # (make_id, model_id) -> number of images
+counts = Counter()  # (make_id, model_id) -> antal billeder
 for img in root.rglob("*.jpg"):
-    parts = img.relative_to(root).parts  # (make, model, year, filename)
+    parts = img.relative_to(root).parts  # (make, model, år, filnavn)
     if len(parts) == 4:
         counts[(parts[0], parts[1])] += 1
 
