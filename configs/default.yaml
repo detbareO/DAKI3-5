@@ -1,0 +1,48 @@
+seed: 42
+paths:
+  index: Data/index.csv
+  data_root: Data
+  duplicates: Data/duplicates.csv
+  results: results
+  split: results/baseline/split.csv
+  runs: runs
+feature_dirs:
+  A: results/baseline
+  Aft: results/Aft
+  C: results/C_{bits}
+split:
+  test_unseen_share: 0.20
+  val_unseen_share: 0.10
+  n_test_queries: {seen: 1000, unseen: 1000}
+  n_val_queries: {seen: 500, unseen: 500}
+  min_images_for_query: 2
+features:
+  batch_size: 128
+  workers: 4
+hashing:
+  bits: [16, 32, 64, 128]
+  pca_fit_max_rows: 50000
+search:
+  k: 10
+  hnsw: {M: 32, ef_construction: 80, ef_search: 64}
+  timing_repeats: 3
+eval:
+  bootstrap_resamples: 1000
+  near_duplicate_threshold: 0.95
+costs:
+  n_timing: 200
+  cpu_threads: 1
+  jpeg_quality: 90
+train:
+  epochs: 15
+  batch_size: 128
+  lr_backbone: 0.001
+  lr_head_multiplier: 10
+  momentum: 0.9
+  weight_decay: 0.001
+  schedule: cosine
+  amp: false
+  quant_lambda: 0.1
+  bits: 64
+  select_by: val_unseen_map_model
+  workers: 8
