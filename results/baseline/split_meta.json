@@ -1,0 +1,36 @@
+{
+  "version": "v2",
+  "seed": 42,
+  "limit": null,
+  "index_sha256": "520d3fa80b396c8334376c11a4d8dfaca92a6c47f1bd11a3f041952b4ddfc10b",
+  "counts": {
+    "models_per_group": {
+      "test_unseen": 343,
+      "train": 1201,
+      "val_unseen": 172
+    },
+    "images_per_group": {
+      "train": 95640,
+      "test_unseen": 27613,
+      "val_unseen": 13473
+    },
+    "images_per_role": {
+      "train": 94140,
+      "gallery_only": 39586,
+      "test_query": 2000,
+      "val_query": 1000
+    },
+    "queries": {
+      "test_seen": 1000,
+      "test_unseen": 1000,
+      "val_seen": 500,
+      "val_unseen": 500
+    },
+    "unused_images": 0
+  },
+  "exact_duplicates": {
+    "groups": 52,
+    "groups_across_models": 50,
+    "groups_across_train_and_held_out": 6
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "model": "torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",
+  "index_sha256": "520d3fa80b396c8334376c11a4d8dfaca92a6c47f1bd11a3f041952b4ddfc10b",
+  "split_sha256": "36bb0ca5585e80e5eac16f8870129dbbeb8e87fa90b635be84f84c939becdd68",
+  "transform": "bbox crop (clamped to the image, full image if the box is degenerate) -> Resize((224, 224)) -> ToTensor -> Normalize(ImageNet mean and std)",
+  "n_rows": 136726,
+  "n_extracted": 136726,
+  "complete": true,
+  "dim": 512,
+  "device": "mps"
+}

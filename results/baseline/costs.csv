@@ -1,0 +1,7 @@
+timestamp,device_label,device,cpu_threads,model,n_images,encode_ms_median,encode_ms_p95,preprocess_ms_median,jpeg_bytes_median,float_vector_bytes
+2026-10-04T16:49:47,macbook-cpu,cpu,1,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,15.96356276422739,16.671053878962994,3.5064583644270897,16853.0,2048
+2026-10-04T16:49:48,macbook-cpu,mps,,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,5.097771063446999,5.649324762634933,3.5064583644270897,16853.0,2048
+2026-10-06T09:19:32,jetson-nano-10w,cpu,1,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,261.330117000398,341.097329749664,20.9485359996506,16853.0,2048
+2026-10-06T09:20:06,jetson-nano-10w,cuda,,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,32.7221080001436,36.3058518503294,20.9485359996506,16853.0,2048
+2026-10-06T09:35:26,jetson-nano-5w,cpu,1,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,519.961125000009,540.123294950217,38.5013024997534,16853.0,2048
+2026-10-06T09:36:04,jetson-nano-5w,cuda,,"torchvision resnet18, IMAGENET1K_V1 weights, fc=Identity",200,45.0431594999827,49.1153317997487,38.5013024997534,16853.0,2048

@@ -1,0 +1,15 @@
+{
+  "near_duplicates": {
+    "threshold": 0.95,
+    "share_above_seen": 0.307,
+    "share_above_unseen": 0.336,
+    "share_above_all": 0.3215
+  },
+  "label_shuffle": {
+    "map_real": 0.5989805709089192,
+    "map_shuffled": 0.0017208333333333331,
+    "chance_estimate": 0.0022701332848570482,
+    "limit": 0.05,
+    "passed": true
+  }
+}
