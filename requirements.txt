@@ -1,1 +1,10 @@
 kagglehub
+scipy
+torch
+torchvision
+faiss-cpu
+numpy
+pandas
+pillow
+matplotlib
+pyyaml
