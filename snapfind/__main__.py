@@ -25,14 +25,11 @@ def build_parser():
 
     features = stages.add_parser("features", parents=[common], help="extract features.npy")
     features.add_argument("--checkpoint", help="a network trained with the train stage (default: ImageNet backbone)")
-    features.add_argument("--degraded", action="store_true",
-                          help="only the test queries, degraded, into features_degraded.npy")
 
     evaluate = stages.add_parser("evaluate", parents=[common], help="search, score, write results")
     evaluate.add_argument("--variants", nargs="+", default=["A", "B"], help="any of A B Aft Bft C")
     evaluate.add_argument("--feature-dir", action="append", default=[], metavar="VARIANT=PATH",
                           help="folder with a variant's features.npy, e.g. A=results/baseline_test or C_64=...")
-    evaluate.add_argument("--degraded", action="store_true", help="search with the degraded test queries")
 
     costs = stages.add_parser("costs", parents=[common], help="encoding time and JPEG size")
     costs.add_argument("--device-label", default="unlabelled", help="e.g. macbook-cpu or aau-gpu")
@@ -86,12 +83,11 @@ def main(argv=None):
         split.run(cfg, out_dir, limit=args.limit, force=args.force)
     elif args.stage == "features":
         from . import features
-        features.run(cfg, out_dir, split_path, force=args.force, checkpoint=args.checkpoint,
-                     degraded=args.degraded)
+        features.run(cfg, out_dir, split_path, force=args.force, checkpoint=args.checkpoint)
     elif args.stage == "evaluate":
         from . import evaluate
         feature_dirs = dict(item.split("=", 1) for item in args.feature_dir)
-        evaluate.run(cfg, out_dir, split_path, args.variants, feature_dirs, degraded=args.degraded)
+        evaluate.run(cfg, out_dir, split_path, args.variants, feature_dirs)
     elif args.stage == "costs":
         from . import costs
         costs.run(cfg, out_dir, split_path, args.device_label, checkpoint=args.checkpoint)

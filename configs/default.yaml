@@ -41,7 +41,6 @@ train:
   weight_decay: 0.001
   schedule: cosine
   quant_lambda: 0.1
-  degrade: true  # blur, lav opløsning, lys og kontrast under træning
   bits: 64
   select_by: val_unseen_map_model
   workers: 8

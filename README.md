@@ -59,20 +59,6 @@ python -m snapfind evaluate --variants A B Aft Bft C --out results/phase2
 Each training run writes `runs/<run>/` with `best.pt` (best mAP@10 on the unseen validation car models),
 `last.pt`, `metrics.csv` and `curves.png`.
 
-Degraded test queries (blurred, lower resolution, darker), to test the network on phone-like photos.
-`C_64_nodegrade` is C trained without degradation, for comparison:
-
-```bash
-python -m snapfind train --variant C --bits 64 --run C_64_nodegrade --set train.degrade=false
-python -m snapfind features --checkpoint runs/C_64_nodegrade/best.pt --out results/C_64_nodegrade
-python -m snapfind features --degraded --out results/baseline
-python -m snapfind features --degraded --checkpoint runs/Aft/best.pt --out results/Aft
-python -m snapfind features --degraded --checkpoint runs/C_64/best.pt --out results/C_64
-python -m snapfind features --degraded --checkpoint runs/C_64_nodegrade/best.pt --out results/C_64_nodegrade
-python -m snapfind evaluate --variants A B Aft Bft C --degraded --out results/phase2_degraded
-python -m snapfind evaluate --variants A C --feature-dir C_64=results/C_64_nodegrade --degraded --out results/phase2_degraded_nodegrade
-```
-
 ## Repo structure
 
 ```

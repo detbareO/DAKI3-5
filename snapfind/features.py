@@ -5,8 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from .config import read_json, repo_path, sha256_of_file, write_json
-from .data import (EVAL_TRANSFORM_DESCRIPTION, CarDataset, degraded_eval_transform, eval_transform,
-                   load_index, load_split)
+from .data import EVAL_TRANSFORM_DESCRIPTION, CarDataset, eval_transform, load_index, load_split
 from .models import BACKBONE_ID, FEATURE_DIM, build_backbone, encode_images, load_checkpoint, pick_device
 
 
@@ -37,7 +36,7 @@ def reusable(features_path, meta_path, n_rows, index_sha, split_sha, complete, m
     return same_source and (bool(meta.get("complete")) or meta.get("split_sha256") == split_sha)
 
 
-def run(cfg, out_dir, split_path, force=False, checkpoint=None, degraded=False):
+def run(cfg, out_dir, split_path, force=False, checkpoint=None):
     index_path = repo_path(cfg["paths"]["index"])
     index = load_index(index_path)
     index_sha = sha256_of_file(index_path)
@@ -58,22 +57,11 @@ def run(cfg, out_dir, split_path, force=False, checkpoint=None, degraded=False):
     else:
         model, model_id, dim = build_backbone(), BACKBONE_ID, FEATURE_DIM
 
-    transform, name, description = eval_transform(), "features", EVAL_TRANSFORM_DESCRIPTION
-    if degraded:
-        # Kun test queries, med den faste forringelse. Gallery forbliver rent.
-        rows = np.flatnonzero((split["role"] == "test_query").to_numpy())
-        transform, name = degraded_eval_transform(), "features_degraded"
-        # De forringede queries skal komme fra samme network som de rene features i mappen
-        clean_meta = out_dir / "features_meta.json"
-        if not clean_meta.exists() or read_json(clean_meta).get("model") != model_id:
-            raise SystemExit(f"{out_dir} has no clean features from this network. Run features with "
-                             "the same --checkpoint (or none for A) first.")
-        description = "fixed degradation (1/3 resolution, blur, 30 % darker and flatter), see data.py"
     complete = len(rows) == len(index)
 
-    features_path = out_dir / f"{name}.npy"
-    meta_path = out_dir / f"{name}_meta.json"
-    if not force and not degraded:
+    features_path = out_dir / "features.npy"
+    meta_path = out_dir / "features_meta.json"
+    if not force:
         if reusable(features_path, meta_path, len(index), index_sha, split_sha, complete, model_id):
             print(f"Reusing {features_path}")
             return
@@ -83,12 +71,11 @@ def run(cfg, out_dir, split_path, force=False, checkpoint=None, degraded=False):
 
     device = pick_device()
     print(f"Extracting features for {len(rows):,} images on {device}")
-    dataset = CarDataset(index, rows, repo_path(cfg["paths"]["data_root"]), transform)
-
+    dataset = CarDataset(index, rows, repo_path(cfg["paths"]["data_root"]), eval_transform())
 
     # skriv til en midlertidig fil først, hvis kørslen bliver afbrudt
     out_dir.mkdir(parents=True, exist_ok=True)
-    partial_path = out_dir / f"{name}.partial.npy"
+    partial_path = out_dir / "features.partial.npy"
     out = np.lib.format.open_memmap(partial_path, mode="w+", dtype=np.float32,
                                     shape=(len(index), dim))
     extract(model, dataset, device, cfg["features"]["batch_size"],
@@ -101,7 +88,7 @@ def run(cfg, out_dir, split_path, force=False, checkpoint=None, degraded=False):
         "model": model_id,
         "index_sha256": index_sha,
         "split_sha256": split_sha,
-        "transform": description,
+        "transform": EVAL_TRANSFORM_DESCRIPTION,
         "n_rows": len(index),
         "n_extracted": len(rows),
         "complete": complete,

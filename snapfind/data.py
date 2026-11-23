@@ -57,37 +57,14 @@ def eval_transform():
     ])
 
 
-def train_transform(degrade):
-    from torchvision import transforms
-
-    steps = [
-        # Et tilfældigt udsnit på mindst halvdelen af bilen, presset til 224 x 224
-        transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.5, 1.0)),
-        transforms.RandomHorizontalFlip(),
-    ]
-    if degrade:
-        # Hver forringelse sker med sandsynlighed 0,3, uafhængigt af de andre
-        steps.append(transforms.RandomApply([transforms.GaussianBlur(5, sigma=(0.1, 2.0))], p=0.3))
-        steps.append(transforms.RandomApply([
-            # Lavere opløsning: gør billedet småt og derefter stort igen
-            transforms.RandomChoice([transforms.Resize((56, 56)), transforms.Resize((112, 112))]),
-            transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
-        ], p=0.3))
-        steps.append(transforms.RandomApply([transforms.ColorJitter(brightness=0.4, contrast=0.4)], p=0.3))
-    steps.append(transforms.ToTensor())
-    steps.append(transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD))
-    return transforms.Compose(steps)
-
-
-def degraded_eval_transform():
+def train_transform():
     from torchvision import transforms
 
     return transforms.Compose([
-        eval_resize(),
-        transforms.Resize((75, 75)),  # en tredjedel af opløsningen
-        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
-        transforms.GaussianBlur(5, sigma=1.0),
-        transforms.ColorJitter(brightness=(0.7, 0.7), contrast=(0.7, 0.7)),  # 30 % mørkere og fladere
+        # Et tilfældigt udsnit på mindst halvdelen af bilen, presset til 224 x 224
+        transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.5, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4),  # lidt lysere/mørkere og mere/mindre kontrast
         transforms.ToTensor(),
         transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
     ])

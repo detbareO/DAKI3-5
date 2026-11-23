@@ -93,19 +93,16 @@ def save_figure(fig, out_dir, name):
     plt.close(fig)
 
 
-def search_deep_hash(folder, bits, query_rows, gallery_rows, cfg, degraded):
-    values = load_features(folder, query_rows, gallery_rows, degraded)
+def search_deep_hash(folder, bits, query_rows, gallery_rows, cfg):
+    values = load_features(folder, query_rows, gallery_rows)
     gallery_codes = hashing.sign_codes(values[gallery_rows])
     query_codes = hashing.sign_codes(values[query_rows])
     return search_one(f"C_{bits}", "deep hash", search.build_binary(gallery_codes, bits),
                       "IndexBinaryFlat", bits, query_codes, gallery_rows, cfg)
 
 
-def load_features(folder, query_rows, gallery_rows, degraded):
+def load_features(folder, query_rows, gallery_rows):
     features = np.load(folder / "features.npy")
-    if degraded:
-        # Kun queries forringes. Gallery er katalogets rene billeder.
-        features[query_rows] = np.load(folder / "features_degraded.npy")[query_rows]
     # Rækker, der aldrig blev udtrukket, er rene nuller (features fra et andet --limit-split)
     needed = np.concatenate([query_rows, gallery_rows])
     if not np.abs(features[needed]).sum(axis=1).all():
@@ -181,7 +178,7 @@ def print_checks(results, k):
               f"improves as K grows: {bool((np.diff(values) > 0).all())}")
 
 
-def run(cfg, out_dir, split_path, variants=("A", "B"), feature_dirs=None, degraded=False):
+def run(cfg, out_dir, split_path, variants=("A", "B"), feature_dirs=None):
     unknown = set(variants) - set(VARIANTS)
     if unknown:
         raise SystemExit(f"Unknown variants {sorted(unknown)}. Choose from {VARIANTS}.")
@@ -201,7 +198,7 @@ def run(cfg, out_dir, split_path, variants=("A", "B"), feature_dirs=None, degrad
     gallery_rows = np.flatnonzero(gallery_mask(split, "test"))
     gallery_rows = gallery_rows[search.shuffle_order(len(gallery_rows), seed)]
 
-    features = load_features(folder_of("A", cfg["feature_dirs"]["A"]), query_rows, gallery_rows, degraded)
+    features = load_features(folder_of("A", cfg["feature_dirs"]["A"]), query_rows, gallery_rows)
     if len(features) != len(split):
         raise SystemExit("features.npy and split.csv have different row counts")
 
@@ -212,7 +209,7 @@ def run(cfg, out_dir, split_path, variants=("A", "B"), feature_dirs=None, degrad
 
     found = search_variants(features, roles, query_rows, gallery_rows, cfg, "A", "B", "B" in variants)
     if "Aft" in variants or "Bft" in variants:
-        features_ft = load_features(folder_of("Aft", cfg["feature_dirs"]["Aft"]), query_rows, gallery_rows, degraded)
+        features_ft = load_features(folder_of("Aft", cfg["feature_dirs"]["Aft"]), query_rows, gallery_rows)
         found += search_variants(features_ft, roles, query_rows, gallery_rows, cfg, "Aft", "Bft", "Bft" in variants)
     if "C" in variants:
         for bits in cfg["hashing"]["bits"]:
@@ -220,7 +217,7 @@ def run(cfg, out_dir, split_path, variants=("A", "B"), feature_dirs=None, degrad
             if not (folder / "features.npy").exists():
                 print(f"  C_{bits}: no features in {folder}, skipped")
                 continue
-            found.append(search_deep_hash(folder, bits, query_rows, gallery_rows, cfg, degraded))
+            found.append(search_deep_hash(folder, bits, query_rows, gallery_rows, cfg))
 
     result_rows, viewpoint_rows = [], []
     per_query = {}

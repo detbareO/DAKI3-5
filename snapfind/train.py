@@ -117,9 +117,9 @@ def run(cfg, split_path, variant, bits, run_name, epochs=None, max_steps=None):
     device = pick_device()
     net = RetrievalNet(n_classes, bits).to(device)
     print(f"Training {run_name} on {device}: {len(train_rows):,} images of {n_classes} car models, "
-          f"{epochs} epochs, augmentation with degradation: {train_cfg['degrade']}")
+          f"{epochs} epochs")
 
-    dataset = CarDataset(index, train_rows, data_root, train_transform(train_cfg["degrade"]))
+    dataset = CarDataset(index, train_rows, data_root, train_transform())
     # drop_last: et sidste batch med ét billede ville give batch norm problemer
     loader = DataLoader(dataset, batch_size=train_cfg["batch_size"], shuffle=True,
                         num_workers=train_cfg["workers"], drop_last=True)
