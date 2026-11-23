@@ -9,6 +9,7 @@ def fit_on_train(features, roles, max_rows, seed):
         rng = np.random.default_rng(seed)
         train = train[rng.choice(len(train), size=max_rows, replace=False)]
 
+
     # PCA: egenvektorer af kovariansmatricen
     centred = train.astype(np.float64) - mean
     covariance = centred.T @ centred / (len(centred) - 1)
@@ -24,6 +25,10 @@ def lsh_matrix(dim, bits, seed):
 def to_bits(features, mean, projection):
     # centrer, ellers er alle features >= 0 pga. ReLU
     return (features - mean) @ projection > 0
+
+
+def sign_codes(values):
+    return np.packbits(np.asarray(values) >= 0, axis=1)
 
 
 def encode(features, mean, projection):

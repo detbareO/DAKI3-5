@@ -21,15 +21,6 @@ def build_flat_ip(gallery):
     return index
 
 
-def build_hnsw(gallery, M, ef_construction, ef_search):
-    gallery = np.ascontiguousarray(gallery, dtype=np.float32)
-    index = faiss.IndexHNSWFlat(gallery.shape[1], M, faiss.METRIC_INNER_PRODUCT)
-    index.hnsw.efConstruction = ef_construction
-    index.add(gallery)
-    index.hnsw.efSearch = ef_search
-    return index
-
-
 def build_binary(codes, bits):
     index = faiss.IndexBinaryFlat(bits)
     index.add(np.ascontiguousarray(codes, dtype=np.uint8))

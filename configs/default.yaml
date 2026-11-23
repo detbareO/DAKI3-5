@@ -24,7 +24,6 @@ hashing:
   pca_fit_max_rows: 50000
 search:
   k: 10
-  hnsw: {M: 32, ef_construction: 80, ef_search: 64}
   timing_repeats: 3
 eval:
   bootstrap_resamples: 1000
@@ -41,8 +40,8 @@ train:
   momentum: 0.9
   weight_decay: 0.001
   schedule: cosine
-  amp: false
   quant_lambda: 0.1
+  degrade: true  # blur, lav opløsning, lys og kontrast under træning
   bits: 64
   select_by: val_unseen_map_model
   workers: 8

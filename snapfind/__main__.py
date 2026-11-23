@@ -23,15 +23,27 @@ def build_parser():
     split = stages.add_parser("split", parents=[common], help="write split.csv")
     split.add_argument("--limit", type=int, help="use whole car models until about this many images")
 
-    stages.add_parser("features", parents=[common], help="extract features.npy")
+    features = stages.add_parser("features", parents=[common], help="extract features.npy")
+    features.add_argument("--checkpoint", help="a network trained with the train stage (default: ImageNet backbone)")
+    features.add_argument("--degraded", action="store_true",
+                          help="only the test queries, degraded, into features_degraded.npy")
 
     evaluate = stages.add_parser("evaluate", parents=[common], help="search, score, write results")
-    evaluate.add_argument("--variants", nargs="+", default=["A", "B"])
+    evaluate.add_argument("--variants", nargs="+", default=["A", "B"], help="any of A B Aft Bft C")
     evaluate.add_argument("--feature-dir", action="append", default=[], metavar="VARIANT=PATH",
-                          help="folder with a variant's features.npy, e.g. A=results/baseline_test")
+                          help="folder with a variant's features.npy, e.g. A=results/baseline_test or C_64=...")
+    evaluate.add_argument("--degraded", action="store_true", help="search with the degraded test queries")
 
     costs = stages.add_parser("costs", parents=[common], help="encoding time and JPEG size")
     costs.add_argument("--device-label", default="unlabelled", help="e.g. macbook-cpu or aau-gpu")
+    costs.add_argument("--checkpoint", help="time a trained network instead of the ImageNet backbone")
+
+    train = stages.add_parser("train", parents=[common], help="Phase 2: train A_ft or C")
+    train.add_argument("--variant", choices=["Aft", "C"], required=True)
+    train.add_argument("--bits", type=int, help="code length for C (default: train.bits in the config)")
+    train.add_argument("--run", help="name of the folder in runs/ (default: Aft or C_<bits>)")
+    train.add_argument("--epochs", type=int, help="default: train.epochs in the config")
+    train.add_argument("--max-steps", type=int, help="stop every epoch after this many steps (smoke tests)")
 
     everything = stages.add_parser("all", parents=[common], help="split, features, evaluate, costs")
     everything.add_argument("--limit", type=int)
@@ -74,14 +86,19 @@ def main(argv=None):
         split.run(cfg, out_dir, limit=args.limit, force=args.force)
     elif args.stage == "features":
         from . import features
-        features.run(cfg, out_dir, split_path, force=args.force)
+        features.run(cfg, out_dir, split_path, force=args.force, checkpoint=args.checkpoint,
+                     degraded=args.degraded)
     elif args.stage == "evaluate":
         from . import evaluate
         feature_dirs = dict(item.split("=", 1) for item in args.feature_dir)
-        evaluate.run(cfg, out_dir, split_path, args.variants, feature_dirs)
+        evaluate.run(cfg, out_dir, split_path, args.variants, feature_dirs, degraded=args.degraded)
     elif args.stage == "costs":
         from . import costs
-        costs.run(cfg, out_dir, split_path, args.device_label)
+        costs.run(cfg, out_dir, split_path, args.device_label, checkpoint=args.checkpoint)
+    elif args.stage == "train":
+        from . import train
+        bits = args.bits or cfg["train"]["bits"]
+        train.run(cfg, split_path, args.variant, bits, args.run, epochs=args.epochs, max_steps=args.max_steps)
 
 
 if __name__ == "__main__":

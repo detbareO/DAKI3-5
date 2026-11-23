@@ -42,6 +42,37 @@ python -m snapfind evaluate
 python -m snapfind costs --device-label aau-gpu
 ```
 
+Phase 2 (trains the network, run on the AAU GPU):
+
+```bash
+python -m snapfind train --variant Aft
+for BITS in 16 32 64 128; do python -m snapfind train --variant C --bits $BITS; done
+
+python -m snapfind features --checkpoint runs/Aft/best.pt --out results/Aft
+for BITS in 16 32 64 128; do
+  python -m snapfind features --checkpoint runs/C_$BITS/best.pt --out results/C_$BITS
+done
+
+python -m snapfind evaluate --variants A B Aft Bft C --out results/phase2
+```
+
+Each training run writes `runs/<run>/` with `best.pt` (best mAP@10 on the unseen validation car models),
+`last.pt`, `metrics.csv` and `curves.png`.
+
+Degraded test queries (blurred, lower resolution, darker), to test the network on phone-like photos.
+`C_64_nodegrade` is C trained without degradation, for comparison:
+
+```bash
+python -m snapfind train --variant C --bits 64 --run C_64_nodegrade --set train.degrade=false
+python -m snapfind features --checkpoint runs/C_64_nodegrade/best.pt --out results/C_64_nodegrade
+python -m snapfind features --degraded --out results/baseline
+python -m snapfind features --degraded --checkpoint runs/Aft/best.pt --out results/Aft
+python -m snapfind features --degraded --checkpoint runs/C_64/best.pt --out results/C_64
+python -m snapfind features --degraded --checkpoint runs/C_64_nodegrade/best.pt --out results/C_64_nodegrade
+python -m snapfind evaluate --variants A B Aft Bft C --degraded --out results/phase2_degraded
+python -m snapfind evaluate --variants A C --feature-dir C_64=results/C_64_nodegrade --degraded --out results/phase2_degraded_nodegrade
+```
+
 ## Repo structure
 
 ```
@@ -53,16 +84,17 @@ Data/                 scripts for downloading and exploring CompCars
   Explore_data.py        plots and numbers for the data chapter
 
 snapfind/             the experiment code
-  __main__.py            the commands (split, features, evaluate, costs, all)
+  __main__.py            the commands (split, features, evaluate, costs, all, train)
   config.py              reads configs/default.yaml
   data.py                loads images, crops to the bounding box, transforms
   split.py               splits car models into train / test / validation and picks queries
-  models.py              ResNet-18 pretrained on ImageNet
+  models.py              ResNet-18 pretrained on ImageNet, and the trained network for A_ft and C
   features.py            runs the network on all images, saves features.npy
   hashing.py             turns features into binary codes (LSH and PCA)
   search.py              FAISS search, float and Hamming
   metrics.py             mAP@10, P@10 and bootstrap intervals
-  evaluate.py            runs the search for A and B and writes results and figures
+  train.py               trains A_ft (fine-tuned float) or C (deep hash)
+  evaluate.py            runs the search for A, B, A_ft, B_ft and C and writes results and figures
   diagnostics.py         sanity checks (near duplicates, shuffled labels)
   costs.py               encoding time and image size on a device
 

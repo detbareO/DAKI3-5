@@ -3,7 +3,6 @@ import pandas as pd
 
 from .config import repo_path, sha256_of_file, write_json
 from .data import load_index
-from .diagnostics import count_duplicate_groups
 
 HELD_OUT = ["val_unseen", "test_unseen"]
 QUERY_ROLES = ["test_query", "val_query"]
@@ -71,6 +70,7 @@ def make_split(index, split_cfg, seed, limit=None):
     role[model_group == "train"] = "train"
     role[np.isin(model_group, HELD_OUT)] = "gallery_only"
 
+
     # en query skal have mindst ét andet billede af samme car model
     images_per_model = index.loc[used, "model_id"].value_counts()
     can_query = index["model_id"].map(images_per_model).fillna(0).to_numpy() >= split_cfg["min_images_for_query"]
@@ -90,6 +90,7 @@ def make_split(index, split_cfg, seed, limit=None):
     role[test_unseen] = "test_query"
     role[val_seen] = "val_query"
     role[val_unseen] = "val_query"
+
 
     # car models hvor alle billeder blev queries: flyt én tilbage
     is_query = np.isin(role, QUERY_ROLES)
@@ -158,10 +159,14 @@ def split_counts(split):
 
 
 def run(cfg, out_dir, limit=None, force=False):
+    # Importeres her: diagnostics henter FAISS, og train.py bruger gallery_mask sammen med torch
+    from .diagnostics import count_duplicate_groups
+
     index_path = repo_path(cfg["paths"]["index"])
     index = load_index(index_path)
     split = make_split(index, cfg["split"], cfg["seed"], limit)
     check_split(split)
+
 
     csv_text = split.to_csv(index=False, lineterminator="\n")
     split_path = out_dir / "split.csv"

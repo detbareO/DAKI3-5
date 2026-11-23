@@ -12,6 +12,9 @@ Data/train_test_split
 
 *.csv
 !results/**/*.csv
+runs/**/*.pt
+!runs/**/*.csv
+runs/smoke_*/
 figures/
 *.pt
 *.pth

@@ -10,6 +10,16 @@ def ap_at_k(rel):
     return (precision_at_i * rel).sum(axis=1) / np.maximum(n_relevant, 1)
 
 
+def top_k_by_inner_product(queries, gallery, k, chunk=100):
+    top = []
+    # Nogle få queries ad gangen, så score-matricen ikke fylder for meget i hukommelsen
+    for start in range(0, len(queries), chunk):
+        scores = queries[start:start + chunk] @ gallery.T
+        order = np.argsort(-scores, axis=1, kind="stable")
+        top.append(order[:, :k])
+    return np.concatenate(top)
+
+
 def p_at_k(rel):
     return np.asarray(rel, dtype=float).mean(axis=1)
 

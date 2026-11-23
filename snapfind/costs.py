@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .config import repo_path
+from .config import repo_path, sha256_of_file
 from .data import eval_resize, eval_transform, load_crop, load_index, load_split
-from .models import BACKBONE_ID, FEATURE_DIM, build_backbone, pick_device
+from .models import BACKBONE_ID, FEATURE_DIM, build_backbone, encode_images, load_checkpoint, pick_device
 
 WARM_UP_RUNS = 10
 
@@ -19,16 +19,16 @@ def time_encoding(model, tensors, device):
     with torch.no_grad():
         # opvarmning, tælles ikke med
         for _ in range(WARM_UP_RUNS):
-            model(tensors[0].to(device)).cpu()
+            encode_images(model, tensors[0].to(device)).cpu()
         for tensor in tensors:
             start = time.perf_counter()
             # .cpu() venter på at GPU'en er færdig
-            model(tensor.to(device)).cpu()
+            encode_images(model, tensor.to(device)).cpu()
             times.append(1000 * (time.perf_counter() - start))
     return float(np.median(times)), float(np.percentile(times, 95))
 
 
-def run(cfg, out_dir, split_path, device_label):
+def run(cfg, out_dir, split_path, device_label, checkpoint=None):
     index = load_index(repo_path(cfg["paths"]["index"]))
     rows = np.arange(len(index))
     if split_path.exists():
@@ -53,7 +53,12 @@ def run(cfg, out_dir, split_path, device_label):
         resize(crop).save(buffer, format="JPEG", quality=cfg["costs"]["jpeg_quality"])
         jpeg_bytes.append(len(buffer.getvalue()))
 
-    model = build_backbone()
+    if checkpoint:
+        # Et trænet network fra train.py, fx C: ResNet-18 plus ét lille lineært lag
+        model = load_checkpoint(checkpoint)
+        model_id = f"checkpoint {checkpoint}, sha256 {sha256_of_file(checkpoint)}"
+    else:
+        model, model_id = build_backbone(), BACKBONE_ID
     threads = cfg["costs"]["cpu_threads"]
     torch.set_num_threads(threads)
     devices = [(torch.device("cpu"), threads)]
@@ -68,7 +73,7 @@ def run(cfg, out_dir, split_path, device_label):
             "device_label": device_label,
             "device": device.type,
             "cpu_threads": used_threads,
-            "model": BACKBONE_ID,
+            "model": model_id,
             "n_images": len(rows),
             "encode_ms_median": median,
             "encode_ms_p95": p95,
